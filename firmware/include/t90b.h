@@ -75,6 +75,11 @@ typedef enum {
     TEMP_UNIT_F = 1
 } temp_unit_t;
 
+typedef enum {
+    UI_THEME_DOCK  = 0, /* Theme A: Watch Minimal + Dynamic 4-category Dock */
+    UI_THEME_STACK = 1  /* Theme B: Pro Telemetry + WatchOS Smart Stack */
+} ui_theme_t;
+
 typedef struct {
     uint16_t setpoint_c;
     uint16_t sleep_temp_c;
@@ -83,6 +88,7 @@ typedef struct {
     uint8_t  language;
     uint8_t  rotate_180;
     uint8_t  power_on_heat;
+    uint8_t  theme;
     uint16_t sleep_time_s;
     uint16_t stdby_time_s;
     uint16_t work_vol_mv;
@@ -96,6 +102,9 @@ typedef struct {
     uint32_t     screen_entered_ms;
     uint32_t     last_activity_ms;
     uint8_t      menu_index;
+    uint8_t      menu_cat;
+    uint8_t      menu_item;
+    bool         menu_in_dock;
     bool         menu_editing;
     uint8_t      factory_flag;
     uint32_t     faults;
@@ -105,6 +114,8 @@ typedef struct {
     t90b_prefs_t prefs;
     t90b_prefs_t edit_prefs;
     uint8_t      heater_duty_pct;
+    uint8_t      toast_ticks;
+    const char  *toast_msg;
 #if T90B_HEAT_PRESETS
     uint16_t     preset_c;
 #endif
@@ -130,9 +141,31 @@ uint32_t prefs_checksum_u8(const uint8_t *buf, uint32_t len);
 bool prefs_save(const t90b_prefs_t *prefs);
 
 /* UI state machine (ui.c) */
+typedef enum {
+    MENU_ITEM_TOGGLE = 0,
+    MENU_ITEM_CYCLE  = 1,
+    MENU_ITEM_NUM    = 2,
+    MENU_ITEM_INFO   = 3,
+    MENU_ITEM_ACTION = 4
+} menu_item_type_t;
+
+typedef struct {
+    const char      *label;
+    uint8_t          cat;
+    menu_item_type_t type;
+    int16_t          min_val;
+    int16_t          max_val;
+    int16_t          step;
+} ui_menu_item_t;
+
 void ui_init(t90b_state_t *state, uint8_t factory_flag, const t90b_prefs_t *initial_prefs);
 void ui_step(t90b_state_t *state, uint32_t now_ms, btn_event_t btn_a, btn_event_t btn_b);
 const char *ui_menu_label(uint8_t index);
+const char *ui_cat_name(uint8_t cat);
+uint8_t ui_cat_item_count(uint8_t cat);
+uint8_t ui_cat_flat_index(uint8_t cat, uint8_t item_in_cat);
+const ui_menu_item_t *ui_menu_item_info(uint8_t flat_index);
+void ui_format_item_value(const t90b_state_t *state, uint8_t flat_index, char *buf, uint8_t buf_len);
 
 /* Heater safety controller (heater.c) */
 typedef struct {

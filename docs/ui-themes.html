@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>T90B Open — UI/UX Theme Lab (160×40 RGB565)</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0b0e;
+      --card: #16161a;
+      --border: #2a2a30;
+      --text: #f5f5f7;
+      --muted: #8e8e93;
+      --accent: #0a84ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+    .wrap { width: 100%; max-width: 780px; display: flex; flex-direction: column; gap: 14px; }
+    header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+    h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+    .sub { font-size: 12px; color: var(--muted); }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    button {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 90ms ease, background 150ms ease, border-color 150ms ease;
+    }
+    button:hover { border-color: #48484f; }
+    button:active { transform: scale(0.97); }
+    button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .bezel {
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid #2c2c2e;
+      background: linear-gradient(180deg, #242426 0%, #141416 100%);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .glass {
+      flex: 1;
+      border-radius: 12px;
+      padding: 10px;
+      background: #000;
+      border: 1px solid #1f1f22;
+      box-shadow: inset 0 1px 4px rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    canvas { width: 100%; max-width: 640px; aspect-ratio: 4 / 1; display: block; image-rendering: pixelated; }
+    .hw-btns { display: flex; flex-direction: column; gap: 8px; }
+    .hw-btn {
+      width: 48px; height: 68px;
+      border-radius: 12px;
+      border: 1px solid #3a3a3c;
+      background: linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+      padding: 0;
+    }
+    .hw-btn b { font-size: 13px; }
+    .hw-btn span { font-size: 10px; color: var(--muted); }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+    }
+    .badge { font-family: ui-monospace, SFMono-Regular, monospace; color: var(--muted); }
+    kbd { background: #2c2c2e; padding: 2px 5px; border-radius: 4px; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>T90B Open — UI/UX Theme Lab</h1>
+        <div class="sub">Simulatore 1:1 (160×40 px · RGB565 reale · GC9D01)</div>
+      </div>
+      <div class="row">
+        <button id="mode-dock" class="active">Theme A · Watch Dock</button>
+        <button id="mode-stack">Theme B · Pro Stack</button>
+      </div>
+    </header>
+
+    <div class="panel">
+      <div class="row">
+        <span style="color:var(--muted)">Schermata:</span>
+        <button data-screen="standby">Standby</button>
+        <button data-screen="heat">Heating</button>
+        <button data-screen="setpoint">Setpoint</button>
+        <button data-screen="sleep">Sleep</button>
+        <button data-screen="fault">Fault</button>
+        <button data-screen="menu" class="active">Menu</button>
+      </div>
+      <div class="row">
+        <label class="row" style="cursor:pointer;color:var(--muted)">
+          <input id="grid-toggle" type="checkbox" checked /> Griglia 160×40
+        </label>
+        <span id="state-badge" class="badge">DOCK · THERMAL</span>
+      </div>
+    </div>
+
+    <div class="bezel">
+      <div class="glass">
+        <canvas id="lcd" width="640" height="160"></canvas>
+      </div>
+      <div class="hw-btns">
+        <button id="hw-b" class="hw-btn" title="Short: +/Giù | Long: OK/Modifica"><b>B</b><span>+ / OK</span></button>
+        <button id="hw-a" class="hw-btn" title="Short: −/Su | Long: Indietro"><b>A</b><span>− / ESC</span></button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="row">
+        <button id="act-a-short">A Breve (− / Su)</button>
+        <button id="act-b-short">B Breve (+ / Giù)</button>
+        <button id="act-b-long">B Lungo (OK / Toggle)</button>
+        <button id="act-a-long">A Lungo (Indietro)</button>
+        <button id="act-ab">A+B (Work ↔ Menu)</button>
+      </div>
+      <span style="color:var(--muted)">Tastiera: <kbd>←/A</kbd> <kbd>→/B</kbd> (tieni premuto = lungo) · <kbd>M</kbd> Menu</span>
+    </div>
+  </div>
+
+  <script>
+    const W = 160, H = 40, SCALE = 4;
+    const off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    const ctx = off.getContext('2d', { willReadFrequently: true });
+    const sctx = document.getElementById('lcd').getContext('2d');
+
+    class Spring {
+      constructor(val, response = 0.22, damping = 1.0) {
+        this.x = val; this.target = val; this.v = 0;
+        this.response = response; this.damping = damping;
+      }
+      set(t, r = this.response, d = this.damping) { this.target = t; this.response = r; this.damping = d; }
+      snap(val) { this.x = val; this.target = val; this.v = 0; }
+      step(dt) {
+        const omega = (2 * Math.PI) / Math.max(0.05, this.response);
+        const f = 1 + 2 * dt * this.damping * omega;
+        const oo = omega * omega, hoo = dt * oo, hhoo = dt * hoo;
+        const detInv = 1 / (f + hhoo);
+        const nextX = (f * this.x + dt * this.v + hhoo * this.target) * detInv;
+        const nextV = (this.v + hoo * (this.target - this.x)) * detInv;
+        this.x = nextX; this.v = nextV;
+        if (Math.abs(this.x - this.target) < 0.02 && Math.abs(this.v) < 0.05) { this.x = this.target; this.v = 0; }
+        return this.x;
+      }
+    }
+
+    const CATEGORIES = [
+      {
+        id: 'thermal', name: 'Thermal', color: '#FF9F0A', dim: '#3B2808', icon: 'flame',
+        items: [
+          { id: 'preset', label: 'Presets',     type: 'cycle', options: ['100-400', '200-450'], idx: 0 },
+          { id: 'step',   label: 'Temp Step',   type: 'num',   val: 5, min: 1, max: 25, step: 1, unit: '°' },
+          { id: 'unit',   label: 'Temp Unit',   type: 'cycle', options: ['C', 'F'], idx: 0 },
+          { id: 'calib',  label: 'Calib',       type: 'num',   val: 0, min: -30, max: 30, step: 1, unit: '°', signed: true }
+        ]
+      },
+      {
+        id: 'sleep', name: 'Sleep', color: '#7D7AFF', dim: '#212042', icon: 'moon',
+        items: [
+          { id: 'poheat', label: 'Wake Heat',   type: 'toggle', val: false },
+          { id: 'stemp',  label: 'Sleep Temp',  type: 'num',    val: 150, min: 80, max: 300, step: 10, unit: '°' },
+          { id: 'stime',  label: 'Sleep Time',  type: 'num',    val: 180, min: 0, max: 600, step: 30, unit: 's', fmtTime: true },
+          { id: 'stdby',  label: 'Auto Off',    type: 'num',    val: 300, min: 0, max: 900, step: 60, unit: 's', fmtTime: true }
+        ]
+      },
+      {
+        id: 'power', name: 'Power', color: '#30D158', dim: '#0F331B', icon: 'bolt',
+        items: [
+          { id: 'pinfo',  label: '20.1V · 2.4R', type: 'info',  badge: '65W' },
+          { id: 'wvol',   label: 'Work Vol',     type: 'cycle', options: ['Auto', '20V', '12V', '9V'], idx: 0 },
+          { id: 'ptrim',  label: 'Power Trim',   type: 'num',   val: 0, min: -20, max: 20, step: 1, unit: '%', signed: true }
+        ]
+      },
+      {
+        id: 'system', name: 'System', color: '#0A84FF', dim: '#0C2847', icon: 'gear',
+        items: [
+          { id: 'theme',  label: 'Menu Theme',  type: 'cycle', options: ['Dock', 'Stack'], idx: 0 },
+          { id: 'flip',   label: 'Rotate 180',  type: 'toggle', val: false },
+          { id: 'lang',   label: 'Language',    type: 'cycle', options: ['EN', 'IT'], idx: 0 },
+          { id: 'reset',  label: 'Restore',     type: 'action', badge: 'Hold B' },
+          { id: 'about',  label: 'T90B Open',   type: 'info',   badge: 'v2.0' }
+        ]
+      }
+    ];
+
+    function flatItems() {
+      const out = [];
+      CATEGORIES.forEach(c => c.items.forEach(it => out.push({ ...it, color: c.color, dim: c.dim, icon: c.icon, ref: it })));
+      return out;
+    }
+
+    const FAULTS = ['NO TIP', 'ADC OPEN', 'NTC ERR', 'VOL LOW', 'HEAT ERR'];
+    const ui = {
+      concept: 'dock',
+      view: 'dock', // 'standby' | 'heat' | 'setpoint' | 'sleep' | 'fault' | 'dock' | 'list' | 'edit'
+      catIdx: 0, itemIdx: 0, stackIdx: 0,
+      faultIdx: 1,
+      setpoint: 350, liveTemp: 348, duty: 42, vin: '20.1V',
+      backupVal: 0, flashToast: '', toastTimer: 0,
+      pressDir: 0, holdPct: 0, holdBtn: null
+    };
+
+    const spDockFocus = new Spring(0, 0.22, 0.92);
+    const spListScroll = new Spring(0, 0.20, 0.95);
+    const spEditMix = new Spring(0, 0.18, 1.0);
+    const spPressScale = new Spring(0, 0.10, 1.0);
+    const spRubber = new Spring(0, 0.22, 0.75);
+    const catPillW = CATEGORIES.map((_, i) => new Spring(i === 0 ? 86 : 20, 0.24, 0.92));
+
+    function fmtVal(it) {
+      const s = it.ref || it;
+      if (s.type === 'toggle') return s.val ? 'ON' : 'OFF';
+      if (s.type === 'cycle') return s.options[s.idx];
+      if (s.type === 'info' || s.type === 'action') return s.badge;
+      if (s.fmtTime) return s.val === 0 ? 'OFF' : (s.val < 60 ? `${s.val}s` : `${Math.floor(s.val / 60)}m`);
+      if (s.signed && s.val > 0) return '+' + s.val + s.unit;
+      return s.val + s.unit;
+    }
+
+    function showToast(msg) { ui.flashToast = msg; ui.toastTimer = 0.9; }
+    function getActiveItem() {
+      return ui.concept === 'dock' ? CATEGORIES[ui.catIdx].items[ui.itemIdx] : flatItems()[ui.stackIdx].ref;
+    }
+
+    function adjustItem(dir) {
+      const it = getActiveItem();
+      if (it.type !== 'num') return;
+      const next = it.val + dir * it.step;
+      if (next < it.min || next > it.max) { spRubber.snap(dir * 3.5); spRubber.set(0, 0.25, 0.55); }
+      else it.val = next;
+    }
+
+    function onShortA() {
+      spRubber.snap(-1.5); spRubber.set(0);
+      if (ui.view === 'standby') { ui.view = 'heat'; }
+      else if (ui.view === 'heat') { ui.view = 'standby'; }
+      else if (ui.view === 'setpoint') { ui.setpoint = Math.max(100, ui.setpoint - 5); }
+      else if (ui.view === 'sleep') { ui.view = 'heat'; }
+      else if (ui.view === 'fault') { ui.faultIdx = (ui.faultIdx + FAULTS.length - 1) % FAULTS.length; }
+      else if (ui.concept === 'dock') {
+        if (ui.view === 'dock') { ui.catIdx = (ui.catIdx + CATEGORIES.length - 1) % CATEGORIES.length; spDockFocus.set(ui.catIdx); }
+        else if (ui.view === 'list') { const n = CATEGORIES[ui.catIdx].items.length; ui.itemIdx = (ui.itemIdx + n - 1) % n; spListScroll.set(ui.itemIdx); }
+        else if (ui.view === 'edit') adjustItem(-1);
+      } else {
+        const all = flatItems();
+        if (ui.view === 'edit') adjustItem(-1);
+        else { ui.stackIdx = (ui.stackIdx + all.length - 1) % all.length; spListScroll.set(ui.stackIdx); }
+      }
+      syncButtons();
+    }
+
+    function onShortB() {
+      spRubber.snap(1.5); spRubber.set(0);
+      if (ui.view === 'standby') {
+        const presets = [100, 200, 300, 350, 400];
+        const i = presets.indexOf(ui.setpoint);
+        ui.setpoint = presets[(i + 1) % presets.length];
+      } else if (ui.view === 'heat') { ui.view = 'setpoint'; }
+      else if (ui.view === 'setpoint') { ui.setpoint = Math.min(450, ui.setpoint + 5); }
+      else if (ui.view === 'sleep') { ui.view = 'heat'; }
+      else if (ui.view === 'fault') { ui.faultIdx = (ui.faultIdx + 1) % FAULTS.length; }
+      else if (ui.concept === 'dock') {
+        if (ui.view === 'dock') { ui.catIdx = (ui.catIdx + 1) % CATEGORIES.length; spDockFocus.set(ui.catIdx); }
+        else if (ui.view === 'list') { const n = CATEGORIES[ui.catIdx].items.length; ui.itemIdx = (ui.itemIdx + 1) % n; spListScroll.set(ui.itemIdx); }
+        else if (ui.view === 'edit') adjustItem(+1);
+      } else {
+        const all = flatItems();
+        if (ui.view === 'edit') adjustItem(+1);
+        else { ui.stackIdx = (ui.stackIdx + 1) % all.length; spListScroll.set(ui.stackIdx); }
+      }
+      syncButtons();
+    }
+
+    function onLongB() {
+      if (ui.view === 'standby' || ui.view === 'heat' || ui.view === 'setpoint') {
+        ui.view = ui.concept === 'dock' ? 'dock' : 'list';
+      } else if (ui.concept === 'dock' && ui.view === 'dock') {
+        ui.itemIdx = 0; spListScroll.snap(0); ui.view = 'list';
+      } else {
+        const it = getActiveItem();
+        if (ui.view === 'edit') { ui.view = 'list'; spEditMix.set(0); showToast('Saved'); }
+        else if (it.type === 'toggle') { it.val = !it.val; }
+        else if (it.type === 'cycle') {
+          it.idx = (it.idx + 1) % it.options.length;
+          if (it.id === 'theme') {
+            const next = it.idx === 0 ? 'dock' : 'stack';
+            ui.concept = next;
+            if (next === 'stack') {
+              ui.stackIdx = flatItems().findIndex(x => x.id === 'theme');
+              spListScroll.snap(ui.stackIdx);
+            } else {
+              ui.catIdx = 3; ui.itemIdx = 0;
+              spDockFocus.snap(3); spListScroll.snap(0);
+            }
+            ui.view = 'list';
+            showToast(it.options[it.idx]);
+          }
+        } else if (it.type === 'num') { ui.backupVal = it.val; ui.view = 'edit'; spEditMix.set(1); }
+        else if (it.type === 'action') { showToast('Restored'); }
+      }
+      syncButtons();
+    }
+
+    function onLongA() {
+      if (ui.view === 'edit') { getActiveItem().val = ui.backupVal; ui.view = 'list'; spEditMix.set(0); showToast('Cancel'); }
+      else if (ui.concept === 'dock' && ui.view === 'list') ui.view = 'dock';
+      else if (ui.view === 'dock' || ui.view === 'list') ui.view = 'standby';
+      else if (ui.view === 'setpoint') ui.view = 'heat';
+      syncButtons();
+    }
+
+    function onChordAB() {
+      if (ui.view === 'dock' || ui.view === 'list' || ui.view === 'edit') {
+        spEditMix.snap(0); ui.view = 'standby';
+      } else {
+        ui.view = ui.concept === 'dock' ? 'dock' : 'list';
+      }
+      syncButtons();
+    }
+
+    function syncButtons() {
+      document.getElementById('mode-dock').className = ui.concept === 'dock' ? 'active' : '';
+      document.getElementById('mode-stack').className = ui.concept === 'stack' ? 'active' : '';
+      CATEGORIES[3].items[0].idx = ui.concept === 'dock' ? 0 : 1;
+      document.querySelectorAll('[data-screen]').forEach(b => {
+        const s = b.dataset.screen;
+        const isMenu = (ui.view === 'dock' || ui.view === 'list' || ui.view === 'edit');
+        b.className = ((s === 'menu' && isMenu) || s === ui.view) ? 'active' : '';
+      });
+      document.getElementById('state-badge').textContent = `${ui.concept.toUpperCase()} · ${ui.view.toUpperCase()}`;
+    }
+
+    function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+
+    function drawIcon(type, cx, cy, color) {
+      ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      if (type === 'flame') {
+        ctx.moveTo(cx, cy - 5);
+        ctx.bezierCurveTo(cx + 4, cy - 2, cx + 4.5, cy + 2, cx, cy + 5);
+        ctx.bezierCurveTo(cx - 4.5, cy + 2, cx - 4, cy - 2, cx, cy - 5);
+        ctx.fill();
+        ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(cx, cy + 2, 1.5, 0, Math.PI * 2); ctx.fill();
+      } else if (type === 'moon') {
+        ctx.arc(cx + 0.5, cy, 4.3, 0.4, Math.PI * 1.65);
+        ctx.arc(cx + 2.8, cy - 1.4, 3.6, Math.PI * 1.55, 0.45, true);
+        ctx.closePath(); ctx.fill();
+      } else if (type === 'bolt') {
+        ctx.moveTo(cx + 1, cy - 5.5); ctx.lineTo(cx - 3.5, cy + 0.5); ctx.lineTo(cx - 0.2, cy + 0.5);
+        ctx.lineTo(cx - 1.2, cy + 5.5); ctx.lineTo(cx + 3.5, cy - 0.5); ctx.lineTo(cx + 0.2, cy - 0.5);
+        ctx.closePath(); ctx.fill();
+      } else if (type === 'gear') {
+        ctx.arc(cx, cy, 3.2, 0, Math.PI * 2); ctx.stroke();
+        for (let a = 0; a < 6; a++) {
+          const ang = (a * Math.PI) / 3;
+          ctx.fillRect(Math.round(cx + Math.cos(ang) * 4.2 - 0.8), Math.round(cy + Math.sin(ang) * 4.2 - 0.8), 1.6, 1.6);
+        }
+      }
+    }
+
+    function renderStandbyOrHeat(isHeat) {
+      if (ui.concept === 'dock') {
+        // Theme A: Apple Watch Minimal (3 clean non-overlapping zones: [2..42] [46..112] [116..158])
+        roundRect(2, 3, 40, 34, 6); ctx.fillStyle = '#1C1C1E'; ctx.fill();
+        ctx.fillStyle = '#8E8E93'; ctx.font = '600 7px -apple-system, sans-serif';
+        ctx.fillText('SET', 6, 12);
+        ctx.fillStyle = isHeat ? '#FF9F0A' : '#0A84FF'; ctx.font = '700 11px -apple-system, sans-serif';
+        ctx.fillText(`${ui.setpoint}°`, 6, 24);
+        roundRect(6, 29, 32, 3, 1.5); ctx.fillStyle = '#2C2C2E'; ctx.fill();
+        roundRect(6, 29, Math.round(32 * (ui.setpoint - 100) / 350), 3, 1.5);
+        ctx.fillStyle = isHeat ? '#FF9F0A' : '#0A84FF'; ctx.fill();
+
+        // Center Hero Temp (strictly inside x=46..112)
+        const t = isHeat ? ui.liveTemp : 28;
+        ctx.fillStyle = isHeat ? '#FFFFFF' : '#EBEBF5';
+        ctx.font = '700 23px -apple-system, sans-serif';
+        ctx.fillText(String(t), 47, 25);
+        ctx.fillStyle = '#8E8E93'; ctx.font = '600 8px -apple-system, sans-serif';
+        ctx.fillText('°C', 93, 14);
+        roundRect(47, 32, 62, 4, 2); ctx.fillStyle = '#1C1C1E'; ctx.fill();
+        if (isHeat) {
+          roundRect(47, 32, Math.round(62 * ui.duty / 100), 4, 2); ctx.fillStyle = '#30D158'; ctx.fill();
+        }
+
+        // Right Pill (x=115..158)
+        roundRect(115, 3, 43, 34, 6); ctx.fillStyle = '#161618'; ctx.fill();
+        ctx.fillStyle = isHeat ? '#FF9F0A' : '#30D158'; ctx.font = '600 7.5px -apple-system, sans-serif';
+        ctx.fillText(isHeat ? 'HEAT' : 'READY', 119, 13);
+        ctx.fillStyle = '#EBEBF5';
+        ctx.fillText(isHeat ? `PWM ${ui.duty}%` : ui.vin, 119, 24);
+        ctx.fillStyle = '#636366'; ctx.font = '500 6.5px -apple-system, sans-serif';
+        ctx.fillText(isHeat ? 'A:STOP' : 'A:START', 119, 33);
+      } else {
+        // Theme B: Pro Telemetry (crisp instrument grid, zero overlap)
+        roundRect(2, 2, 156, 36, 6); ctx.fillStyle = '#111113'; ctx.fill();
+        ctx.strokeStyle = isHeat ? '#FF9F0A' : '#2C2C2E'; ctx.lineWidth = 1; ctx.stroke();
+
+        // Top-left status badge
+        roundRect(6, 5, 34, 10, 3); ctx.fillStyle = isHeat ? '#3B2808' : '#0C2847'; ctx.fill();
+        ctx.fillStyle = isHeat ? '#FF9F0A' : '#0A84FF'; ctx.font = '700 7px -apple-system, sans-serif';
+        ctx.fillText(isHeat ? 'PID ON' : 'STBY', 10, 12.5);
+
+        // Live temp bottom-left
+        ctx.fillStyle = '#FFFFFF'; ctx.font = '700 18px -apple-system, sans-serif';
+        ctx.fillText(isHeat ? `${ui.liveTemp}.0` : '28.0', 6, 31);
+
+        // Right 2x2 telemetry cells (x=76..154)
+        ctx.fillStyle = '#8E8E93'; ctx.font = '500 7px -apple-system, sans-serif';
+        ctx.fillText('SET', 78, 12); ctx.fillText('VIN', 118, 12);
+        ctx.fillText('PWM', 78, 24); ctx.fillText('MENU', 118, 24);
+        ctx.fillStyle = '#FF9F0A'; ctx.font = '700 8px -apple-system, sans-serif';
+        ctx.fillText(`${ui.setpoint}°`, 96, 12);
+        ctx.fillStyle = '#30D158';
+        ctx.fillText(ui.vin, 134, 12);
+        ctx.fillStyle = '#EBEBF5';
+        ctx.fillText(`${isHeat ? ui.duty : 0}%`, 98, 24);
+        ctx.fillStyle = '#636366';
+        ctx.fillText('A+B', 140, 24);
+
+        // Bottom full-width PWM bar
+        roundRect(78, 29, 75, 4, 2); ctx.fillStyle = '#242426'; ctx.fill();
+        if (isHeat) {
+          roundRect(78, 29, Math.round(75 * ui.duty / 100), 4, 2); ctx.fillStyle = '#30D158'; ctx.fill();
+        }
+      }
+    }
+
+    function renderSetpoint() {
+      roundRect(2, 2, 156, 36, 7); ctx.fillStyle = '#1C1C1E'; ctx.fill();
+      ctx.strokeStyle = '#FF9F0A'; ctx.lineWidth = 1.1; ctx.stroke();
+      ctx.fillStyle = '#FF9F0A'; ctx.font = '700 8px -apple-system, sans-serif';
+      ctx.fillText('SETPOINT', 8, 13);
+      ctx.fillStyle = '#8E8E93'; ctx.font = '600 9px -apple-system, sans-serif';
+      ctx.fillText('‹ A', 8, 27);
+      ctx.fillText('B ›', 138, 27);
+      ctx.fillStyle = '#FFFFFF'; ctx.font = '700 22px -apple-system, sans-serif';
+      ctx.fillText(`${ui.setpoint}°C`, 52, 26);
+      const pct = (ui.setpoint - 100) / 350;
+      roundRect(8, 32, 144, 3, 1.5); ctx.fillStyle = '#2C2C2E'; ctx.fill();
+      roundRect(8, 32, Math.round(144 * pct), 3, 1.5); ctx.fillStyle = '#FF9F0A'; ctx.fill();
+    }
+
+    function renderSleep() {
+      roundRect(4, 6, 42, 28, 7); ctx.fillStyle = '#212042'; ctx.fill();
+      drawIcon('moon', 15, 20, '#7D7AFF');
+      ctx.fillStyle = '#7D7AFF'; ctx.font = '600 8px -apple-system, sans-serif';
+      ctx.fillText('ZZZ', 24, 23);
+      ctx.fillStyle = '#8E8E93'; ctx.font = '700 22px -apple-system, sans-serif';
+      ctx.fillText('150°C', 56, 27);
+    }
+
+    function renderFault() {
+      // Fixed: centered, generous inner padding, never touches border!
+      roundRect(3, 3, 154, 34, 7); ctx.fillStyle = '#2C0B0E'; ctx.fill();
+      ctx.strokeStyle = '#FF453A'; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.beginPath(); ctx.arc(19, 20, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#FF453A'; ctx.fill();
+      ctx.fillStyle = '#000'; ctx.font = '700 11px -apple-system, sans-serif';
+      ctx.fillText('!', 17.5, 24);
+      ctx.fillStyle = '#FFFFFF'; ctx.font = '700 11px -apple-system, sans-serif';
+      ctx.fillText(FAULTS[ui.faultIdx], 35, 17);
+      ctx.fillStyle = '#FF9F0A'; ctx.font = '600 8px -apple-system, sans-serif';
+      ctx.fillText('HEATER OFF · CHECK TIP', 35, 29);
+    }
+
+    function renderDock() {
+      CATEGORIES.forEach((_, i) => catPillW[i].set(i === ui.catIdx ? 86 : 20));
+      let totalW = 9;
+      const widths = catPillW.map(s => s.x);
+      widths.forEach(w => totalW += w);
+      let x = (W - totalW) / 2 + spRubber.x * 0.7;
+
+      CATEGORIES.forEach((cat, i) => {
+        const w = widths[i], isAct = i === ui.catIdx;
+        const y = isAct ? 4 : 6, h = isAct ? 32 : 28;
+        roundRect(x, y, w, h, 7);
+        ctx.fillStyle = isAct ? '#1C1C1E' : '#111113'; ctx.fill();
+        if (isAct && ui.holdBtn === 'B' && ui.holdPct > 0.04) {
+          ctx.save(); roundRect(x, y, w, h, 7); ctx.clip();
+          ctx.fillStyle = cat.dim; ctx.fillRect(x, y, w * ui.holdPct, h); ctx.restore();
+        }
+        ctx.strokeStyle = isAct ? cat.color : '#262629'; ctx.lineWidth = isAct ? 1.1 : 0.8;
+        roundRect(x + 0.5, y + 0.5, w - 1, h - 1, 6.5); ctx.stroke();
+
+        const iconCx = isAct ? x + 13 : x + w / 2, iconCy = y + h / 2;
+        if (isAct) { ctx.fillStyle = cat.dim; roundRect(x + 5, y + 6, 16, 20, 4.5); ctx.fill(); }
+        drawIcon(cat.icon, iconCx, iconCy, isAct ? cat.color : '#636366');
+
+        if (w > 46) {
+          ctx.save(); roundRect(x + 23, y, w - 25, h, 4); ctx.clip();
+          ctx.globalAlpha = Math.min(1, (w - 44) / 34);
+          ctx.fillStyle = '#FFFFFF'; ctx.font = '600 9.5px -apple-system, sans-serif';
+          ctx.fillText(cat.name, x + 25, y + 14);
+          ctx.fillStyle = '#8E8E93'; ctx.font = '500 7.5px -apple-system, sans-serif';
+          const sum = i === 0 ? `${fmtVal(cat.items[1])} · ${fmtVal(cat.items[2])}`
+                    : i === 1 ? `${fmtVal(cat.items[1])} · ${fmtVal(cat.items[2])}`
+                    : i === 2 ? fmtVal(cat.items[1])
+                    : fmtVal(cat.items[0]);
+          ctx.fillText(sum, x + 25, y + 25);
+          ctx.restore();
+        }
+        x += w + 3;
+      });
+    }
+
+    function renderControl(it, rightEdge, cy, color, editMix) {
+      const s = it.ref || it;
+      if (s.type === 'toggle') {
+        const sx = rightEdge - 20, sy = cy - 5.5;
+        roundRect(sx, sy, 20, 11, 5.5); ctx.fillStyle = s.val ? '#30D158' : '#39393D'; ctx.fill();
+        ctx.beginPath(); ctx.arc((s.val ? sx + 14.5 : sx + 5.5), cy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFF'; ctx.fill();
+        return;
+      }
+      const txt = fmtVal(s);
+      ctx.font = '600 8.5px -apple-system, sans-serif';
+      const tw = ctx.measureText(txt).width;
+      const padX = editMix > 0.2 ? 10 : 5;
+      const pw = tw + padX * 2, px = rightEdge - pw + (editMix > 0.2 ? spRubber.x : 0);
+      roundRect(px, cy - 7.5, pw, 15, 4.5);
+      ctx.fillStyle = editMix > 0.3 ? color : '#2C2C2E'; ctx.fill();
+      if (editMix > 0.3) {
+        ctx.fillStyle = '#000'; ctx.font = '700 8.5px -apple-system, sans-serif';
+        ctx.fillText('‹', px + 3, cy + 3); ctx.fillText('›', px + pw - 7, cy + 3);
+        ctx.fillText(txt, px + padX, cy + 3);
+      } else {
+        ctx.fillStyle = s.type === 'action' ? '#FF453A' : color;
+        ctx.fillText(txt, px + padX, cy + 3);
+      }
+    }
+
+    function renderList(isStack) {
+      const items = isStack ? flatItems() : CATEGORIES[ui.catIdx].items;
+      const activeIdx = isStack ? ui.stackIdx : ui.itemIdx;
+      const catColor = isStack ? items[activeIdx].color : CATEGORIES[ui.catIdx].color;
+      const catDim = isStack ? items[activeIdx].dim : CATEGORIES[ui.catIdx].dim;
+      const scroll = spListScroll.x;
+
+      if (!isStack) {
+        roundRect(2, 4, 4, 32, 2);
+        ctx.fillStyle = ui.holdBtn === 'A' ? '#FFF' : catColor; ctx.fill();
+      }
+
+      items.forEach((it, idx) => {
+        const rel = idx - scroll;
+        if (Math.abs(rel) > 1.25) return;
+        const cy = 20 + rel * 24;
+        const focus = Math.max(0, 1 - Math.abs(rel));
+        const cardH = 18 + focus * 8;
+        const cardX = (isStack ? 3 : 9) + (1 - focus) * 4;
+        const cardW = (isStack ? 149 : 143) - (1 - focus) * 8;
+
+        ctx.save(); ctx.globalAlpha = 0.26 + focus * 0.74;
+        if (focus > 0.5) {
+          roundRect(cardX, cy - cardH / 2, cardW, cardH, 6.5);
+          ctx.fillStyle = '#1C1C1E'; ctx.fill();
+          if (ui.holdPct > 0.04) {
+            ctx.save(); roundRect(cardX, cy - cardH / 2, cardW, cardH, 6.5); ctx.clip();
+            ctx.fillStyle = ui.holdBtn === 'A' ? 'rgba(255,69,58,0.28)' : catDim;
+            ctx.fillRect(cardX, cy - cardH / 2, cardW * ui.holdPct, cardH); ctx.restore();
+          }
+          ctx.strokeStyle = ui.view === 'edit' ? catColor : '#323236';
+          ctx.lineWidth = ui.view === 'edit' ? 1.2 : 0.8;
+          roundRect(cardX + 0.5, cy - cardH / 2 + 0.5, cardW - 1, cardH - 1, 6); ctx.stroke();
+          if (isStack) drawIcon(it.icon, cardX + 10, cy, it.color);
+        }
+        ctx.fillStyle = focus > 0.5 ? '#FFFFFF' : '#8E8E93';
+        ctx.font = `${focus > 0.5 ? '600 9.5px' : '500 8px'} -apple-system, sans-serif`;
+        ctx.fillText(it.label, cardX + (isStack && focus > 0.5 ? 20 : 7), cy + 3.2);
+        if (focus > 0.45) renderControl(it, cardX + cardW - 5, cy, isStack ? it.color : catColor, idx === activeIdx ? spEditMix.x : 0);
+        ctx.restore();
+      });
+
+      const trackH = 28, trackY = 6, thumbH = Math.max(5, trackH / items.length);
+      roundRect(155.5, trackY, 2.5, trackH, 1.2); ctx.fillStyle = '#242426'; ctx.fill();
+      const norm = Math.max(0, Math.min(1, scroll / Math.max(1, items.length - 1)));
+      roundRect(155.5, trackY + norm * (trackH - thumbH), 2.5, thumbH, 1.2); ctx.fillStyle = catColor; ctx.fill();
+    }
+
+    function blit() {
+      const img = ctx.getImageData(0, 0, W, H), d = img.data;
+      for (let i = 0; i < d.length; i += 4) { d[i] &= 0xF8; d[i + 1] &= 0xFC; d[i + 2] &= 0xF8; }
+      ctx.putImageData(img, 0, 0);
+      sctx.imageSmoothingEnabled = false;
+      sctx.clearRect(0, 0, W * SCALE, H * SCALE);
+      sctx.drawImage(off, 0, 0, W * SCALE, H * SCALE);
+      if (document.getElementById('grid-toggle').checked) {
+        sctx.fillStyle = 'rgba(0,0,0,0.22)';
+        for (let x = 0; x < W * SCALE; x += SCALE) sctx.fillRect(x, 0, 1, H * SCALE);
+        for (let y = 0; y < H * SCALE; y += SCALE) sctx.fillRect(0, y, W * SCALE, 1);
+      }
+    }
+
+    let holdStart = 0, holdFired = false, activeBtn = null;
+    const HOLD_MS = 420;
+    function beginHold(b) { if (!activeBtn) { activeBtn = b; holdStart = performance.now(); holdFired = false; ui.holdBtn = b; spPressScale.set(1); } }
+    function endHold(b) {
+      if (activeBtn !== b) return;
+      const dt = performance.now() - holdStart;
+      activeBtn = null; ui.holdBtn = null; ui.holdPct = 0; spPressScale.set(0);
+      if (!holdFired && dt < HOLD_MS) { if (b === 'A') onShortA(); else onShortB(); }
+    }
+    ['a', 'b'].forEach(k => {
+      const el = document.getElementById('hw-' + k), btn = k.toUpperCase();
+      el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture(e.pointerId); beginHold(btn); });
+      el.addEventListener('pointerup', () => endHold(btn));
+      el.addEventListener('pointercancel', () => endHold(btn));
+    });
+    document.getElementById('act-a-short').onclick = onShortA;
+    document.getElementById('act-b-short').onclick = onShortB;
+    document.getElementById('act-b-long').onclick = onLongB;
+    document.getElementById('act-a-long').onclick = onLongA;
+    document.getElementById('act-ab').onclick = onChordAB;
+    document.getElementById('mode-dock').onclick = () => { ui.concept = 'dock'; if (ui.view === 'list') ui.view = 'dock'; syncButtons(); };
+    document.getElementById('mode-stack').onclick = () => { ui.concept = 'stack'; if (ui.view === 'dock') ui.view = 'list'; syncButtons(); };
+    document.querySelectorAll('[data-screen]').forEach(b => b.onclick = () => {
+      const s = b.dataset.screen;
+      ui.view = s === 'menu' ? (ui.concept === 'dock' ? 'dock' : 'list') : s;
+      spEditMix.snap(0);
+      syncButtons();
+    });
+    window.addEventListener('keydown', e => {
+      if (e.repeat) return;
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') beginHold('A');
+      if (e.key === 'ArrowRight' || e.key === 'b' || e.key === 'B') beginHold('B');
+      if (e.key === 'm' || e.key === 'M') onChordAB();
+    });
+    window.addEventListener('keyup', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') endHold('A');
+      if (e.key === 'ArrowRight' || e.key === 'b' || e.key === 'B') endHold('B');
+    });
+
+    let lastT = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+      if (activeBtn && !holdFired) {
+        ui.holdPct = Math.min(1, (now - holdStart) / HOLD_MS);
+        if (ui.holdPct >= 1) { holdFired = true; ui.holdPct = 0; spPressScale.set(0); if (activeBtn === 'B') onLongB(); else onLongA(); }
+      }
+      spDockFocus.step(dt); spListScroll.step(dt); spEditMix.step(dt); spPressScale.step(dt); spRubber.step(dt);
+      catPillW.forEach(s => s.step(dt));
+      if (ui.toastTimer > 0) ui.toastTimer = Math.max(0, ui.toastTimer - dt);
+
+      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+      if (ui.view === 'standby') renderStandbyOrHeat(false);
+      else if (ui.view === 'heat') renderStandbyOrHeat(true);
+      else if (ui.view === 'setpoint') renderSetpoint();
+      else if (ui.view === 'sleep') renderSleep();
+      else if (ui.view === 'fault') renderFault();
+      else if (ui.concept === 'dock' && ui.view === 'dock') renderDock();
+      else renderList(ui.concept === 'stack');
+
+      if (ui.toastTimer > 0) {
+        ctx.save(); ctx.globalAlpha = Math.min(1, ui.toastTimer * 3);
+        roundRect(44, 10, 72, 20, 10); ctx.fillStyle = '#2C2C2E'; ctx.fill();
+        ctx.strokeStyle = '#30D158'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = '#FFF'; ctx.font = '600 8.5px -apple-system, sans-serif';
+        const tw = ctx.measureText(ui.flashToast).width;
+        ctx.fillText(ui.flashToast, 80 - tw / 2, 23); ctx.restore();
+      }
+      blit();
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

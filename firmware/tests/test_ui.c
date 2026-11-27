@@ -36,27 +36,53 @@ static void test_menu_and_settings_persistence(void) {
     ui_step(&s, 1300U, BTN_NONE, BTN_NONE);
     assert(s.screen == UI_SCREEN_STANDBY);
 
-    /* Enter menu with A+B */
+    /* Enter menu with A+B -> starts in Dock mode (Thermal) */
     ui_step(&s, 1350U, BTN_SHORT, BTN_SHORT);
     assert(s.screen == UI_SCREEN_MENU);
+    assert(s.menu_in_dock);
+    assert(s.menu_cat == 0U);
+
+    /* Open Thermal list with B long, move to item 1 (Temp Unit) */
+    ui_step(&s, 1400U, BTN_NONE, BTN_LONG);
+    assert(!s.menu_in_dock);
+    ui_step(&s, 1450U, BTN_NONE, BTN_SHORT);
+    assert(s.menu_index == 1U);
+    assert(strcmp(ui_menu_label(1U), "Temp Unit") == 0);
+
+    /* Toggle Temp Unit directly with B long -> saves F */
+    ui_step(&s, 1500U, BTN_NONE, BTN_LONG);
+    assert(s.prefs.temp_unit == TEMP_UNIT_F);
+
+    /* Return to Dock with A long, navigate to System (cat 3) */
+    ui_step(&s, 1550U, BTN_LONG, BTN_NONE);
+    assert(s.menu_in_dock);
+    ui_step(&s, 1600U, BTN_SHORT, BTN_NONE); /* wrap 0 -> 3 (System) */
+    assert(s.menu_cat == 3U);
+
+    /* Enter System -> item 0 is Menu Theme; B long switches Dock -> Stack */
+    ui_step(&s, 1650U, BTN_NONE, BTN_LONG);
+    assert(s.menu_index == 10U);
+    assert(strcmp(ui_menu_label(10U), "Menu Theme") == 0);
+    ui_step(&s, 1700U, BTN_NONE, BTN_LONG);
+    assert(s.prefs.theme == UI_THEME_STACK);
+
+    /* Navigate to Temp Step (item 0), edit and cancel with A long */
+    ui_step(&s, 1750U, BTN_NONE, BTN_SHORT); /* 11 */
+    ui_step(&s, 1800U, BTN_NONE, BTN_SHORT); /* 12 */
+    ui_step(&s, 1850U, BTN_NONE, BTN_SHORT); /* 13 */
+    ui_step(&s, 1900U, BTN_NONE, BTN_SHORT); /* 0: Temp Step */
     assert(s.menu_index == 0U);
-    assert(strcmp(ui_menu_label(0U), "0.Exit") == 0);
-
-    /* Navigate to item 9 (Temp Unit) */
-    for (int i = 0; i < 9; i++) {
-        ui_step(&s, 1400U + (uint32_t)i * 50U, BTN_NONE, BTN_SHORT);
-    }
-    assert(s.menu_index == 9U);
-    assert(strcmp(ui_menu_label(9U), "9.Temp Unit") == 0);
-
-    /* Open edit with B long, toggle to F, cancel with A long */
-    ui_step(&s, 2000U, BTN_NONE, BTN_LONG);
+    ui_step(&s, 1950U, BTN_NONE, BTN_LONG);
     assert(s.menu_editing);
-    ui_step(&s, 2050U, BTN_NONE, BTN_SHORT);
-    assert(s.edit_prefs.temp_unit == TEMP_UNIT_F);
-    ui_step(&s, 2100U, BTN_LONG, BTN_NONE);
+    ui_step(&s, 2000U, BTN_NONE, BTN_SHORT);
+    assert(s.edit_prefs.temp_step_c == 6U);
+    ui_step(&s, 2050U, BTN_LONG, BTN_NONE);
+    assert(!s.menu_editing);
+    assert(s.prefs.temp_step_c == 5U);
+
+    /* Exit menu with A+B */
+    ui_step(&s, 2100U, BTN_SHORT, BTN_SHORT);
     assert(s.screen == UI_SCREEN_STANDBY);
-    assert(s.prefs.temp_unit == TEMP_UNIT_C);
 }
 
 static void test_setpoint_sleep_wake_and_faults(void) {
