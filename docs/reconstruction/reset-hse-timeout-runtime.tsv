@@ -1,0 +1,22 @@
+repetition	step	pc	event	address	size_bytes
+1	0	0x080052cc	instruction		2
+1	63	0x0800a504	instruction		2
+1	57422	0x0800a538	instruction		2
+1	57429	0x0800a702	instruction		2
+1	57431	0x080052d0	instruction		2
+1	57433	0x08005148	instruction		4
+1	78926	0x0800a2b8	unmodeled_read	0x40021018	4
+2	0	0x080052cc	instruction		2
+2	63	0x0800a504	instruction		2
+2	57422	0x0800a538	instruction		2
+2	57429	0x0800a702	instruction		2
+2	57431	0x080052d0	instruction		2
+2	57433	0x08005148	instruction		4
+2	78926	0x0800a2b8	unmodeled_read	0x40021018	4
+3	0	0x080052cc	instruction		2
+3	63	0x0800a504	instruction		2
+3	57422	0x0800a538	instruction		2
+3	57429	0x0800a702	instruction		2
+3	57431	0x080052d0	instruction		2
+3	57433	0x08005148	instruction		4
+3	78926	0x0800a2b8	unmodeled_read	0x40021018	4

@@ -1,0 +1,1 @@
+I/elog            (217)EasyLogger V2.2.99 is initialize success.

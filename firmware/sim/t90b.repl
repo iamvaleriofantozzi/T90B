@@ -1,0 +1,30 @@
+// Renode platform description for ALIENTEK T90B (NSING N32L403 Cortex-M4)
+// References: N32L40x UM v2.6.0 & SVD N32L403
+
+cpu: CPU.CortexM @ sysbus
+    cpuType: "cortex-m4"
+    nvic: nvic
+
+nvic: IRQControllers.NVIC @ sysbus 0xE000E000
+    -> cpu@0
+
+flash: Memory.MappedMemory @ sysbus 0x08000000
+    size: 0x20000
+
+sram: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x6000
+
+rcc: Python.PythonPeripheral @ sysbus 0x40021000
+    size: 0x400
+    initable: false
+    script: "request.value = 0x0C00246C if request.offset == 0x24 else 0"
+
+tim1: Python.PythonPeripheral @ sysbus 0x40012C00
+    size: 0x400
+    initable: false
+    script: "request.value = 0"
+
+iwdg: Python.PythonPeripheral @ sysbus 0x40003000
+    size: 0x400
+    initable: false
+    script: "request.value = 0"

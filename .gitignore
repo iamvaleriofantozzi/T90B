@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Build firmware
+firmware/build/
+
+# Ghidra (database locali e progetti con username)
+analysis/*.gpr
+analysis/*.rep/
+
+# Dump hardware e firmware proprietari
+analysis/backup/
+t90.atk
+analysis/t90-app.bin
+
+# Stato locale agenti / IDE / segreti
+.opencode/
+.env
+.vscode/
+.idea/
+*.swp

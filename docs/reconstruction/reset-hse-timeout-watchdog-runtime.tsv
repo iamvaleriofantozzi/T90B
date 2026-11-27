@@ -1,0 +1,40 @@
+repetition	step	pc	event	address	size_bytes
+1	0	0x080052cc	instruction		2
+1	63	0x0800a504	instruction		2
+1	57422	0x0800a538	instruction		2
+1	57429	0x0800a702	instruction		2
+1	57431	0x080052d0	instruction		2
+1	57433	0x08005148	instruction		4
+1	1508237	0x080113e4	instruction		2
+1	1508242	0x08009328	instruction		2
+1	1508302	0x08009362	instruction		2
+1	1508304	0x08009366	instruction		2
+1	1508311	0x0801140e	instruction		2
+1	1508315	0x08011416	instruction		2
+1	1659624	0x08010108	unmodeled_read	0x0801f000	4
+2	0	0x080052cc	instruction		2
+2	63	0x0800a504	instruction		2
+2	57422	0x0800a538	instruction		2
+2	57429	0x0800a702	instruction		2
+2	57431	0x080052d0	instruction		2
+2	57433	0x08005148	instruction		4
+2	1508237	0x080113e4	instruction		2
+2	1508242	0x08009328	instruction		2
+2	1508302	0x08009362	instruction		2
+2	1508304	0x08009366	instruction		2
+2	1508311	0x0801140e	instruction		2
+2	1508315	0x08011416	instruction		2
+2	1659624	0x08010108	unmodeled_read	0x0801f000	4
+3	0	0x080052cc	instruction		2
+3	63	0x0800a504	instruction		2
+3	57422	0x0800a538	instruction		2
+3	57429	0x0800a702	instruction		2
+3	57431	0x080052d0	instruction		2
+3	57433	0x08005148	instruction		4
+3	1508237	0x080113e4	instruction		2
+3	1508242	0x08009328	instruction		2
+3	1508302	0x08009362	instruction		2
+3	1508304	0x08009366	instruction		2
+3	1508311	0x0801140e	instruction		2
+3	1508315	0x08011416	instruction		2
+3	1659624	0x08010108	unmodeled_read	0x0801f000	4

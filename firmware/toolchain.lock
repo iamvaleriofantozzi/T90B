@@ -1,0 +1,8 @@
+# Toolchain lock for ALIENTEK T90B candidate firmware
+compiler: arm-none-eabi-gcc (GCC) 16.2.0
+compiler_path: /opt/homebrew/bin/arm-none-eabi-gcc
+compiler_sha256: 41b601fd92cbb3c71c1d319b6da27deff244c19e94a4bf852a575d30f9ef0ba2
+binutils: arm-none-eabi-binutils 2.47
+target_arch: arm-none-eabi (cortex-m4, thumb, soft-float)
+sdk: freestanding (no external HAL; CMSIS-style MMIO register definitions from N32L40x UM v2.6.0 & SVD 1.0.2)
+host_test_cc: Apple clang 21.0.0
